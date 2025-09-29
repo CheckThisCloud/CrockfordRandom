@@ -1,6 +1,6 @@
 {
     "name": "checkthiscloud/crockford-random",
-    "description": "A PHP library implementing Crockford's Random Number Generator",
+    "description": "A PHP library for generating Crockford Base32 random strings",
     "type": "library",
     "license": "MIT",
     "authors": [

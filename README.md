@@ -1,14 +1,21 @@
 # CrockfordRandom
 
-A PHP library implementing Douglas Crockford's Random Number Generator algorithm.
+A PHP library for generating random strings using Crockford Base32 encoding alphabet.
+
+## Features
+
+- Generates cryptographically secure random strings using PHP 8.2+'s `Random\Randomizer`
+- Uses Crockford Base32 alphabet: `0123456789ABCDEFGHJKMNPQRSTVWXYZ`
+- Excludes ambiguous characters (I, L, O, U) for better readability
+- Type-safe with strict typing enabled
+- Comprehensive error handling
 
 ## Requirements
 
-- PHP 8.3 or higher
+- PHP 8.2 or higher
+- `Random\Randomizer` extension (included in PHP 8.2+)
 
 ## Installation
-
-Install via Composer:
 
 ```bash
 composer require checkthiscloud/crockford-random
@@ -18,35 +25,48 @@ composer require checkthiscloud/crockford-random
 
 ```php
 <?php
+use App\Util\CrockfordRandom;
 
-use CheckThisCloud\CrockfordRandom\CrockfordRandom;
+// Generate a random string of specified length
+$randomString = CrockfordRandom::generate(10);
+echo $randomString; // Example: "4G2KPQRST3"
 
-$generator = new CrockfordRandom();
-$randomNumber = $generator->random(); // Returns a float between 0 and 1
+// Generate empty string
+$empty = CrockfordRandom::generate(0);
+echo $empty; // ""
+
+// Generate longer strings
+$longString = CrockfordRandom::generate(32);
+echo $longString; // Example: "8N2KPQRST34G2KPQRST34G2KPQRST3W"
 ```
 
-## Development
+## Error Handling
 
-### Install Dependencies
+The library throws `ValueError` for invalid input:
+
+```php
+try {
+    CrockfordRandom::generate(-1);
+} catch (ValueError $e) {
+    echo $e->getMessage(); // "Length must be non-negative"
+}
+```
+
+## Testing
+
+Run the included tests:
 
 ```bash
-composer install
+php run-tests.php
 ```
 
-### Run Tests
+## Character Set
 
-```bash
-composer test
-```
+The library uses the Crockford Base32 alphabet which excludes ambiguous characters:
 
-### Run Static Analysis
+- **Included**: `0123456789ABCDEFGHJKMNPQRSTVWXYZ`
+- **Excluded**: `I`, `L`, `O`, `U` (to avoid confusion with `1`, `1`, `0`, `V`)
 
-```bash
-composer phpstan
-```
+## License
 
-### Run All Checks
-
-```bash
-composer check
-```
+MIT License
