@@ -1,0 +1,25 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Util;
+
+use Random\Randomizer;
+use ValueError;
+
+final class CrockfordRandom
+{
+    private const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+    public static function generate(int $length): string
+    {
+        if ($length < 0) {
+            throw new ValueError('Length must be non-negative');
+        }
+        if ($length === 0) {
+            return '';
+        }
+
+        $randomizer = new Randomizer();
+        return $randomizer->getBytesFromString(self::ALPHABET, $length);
+    }
+}

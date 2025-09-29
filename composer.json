@@ -1,0 +1,19 @@
+{
+    "name": "checkthiscloud/crockford-random",
+    "description": "A PHP library for generating Crockford Base32 random strings",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    }
+}
