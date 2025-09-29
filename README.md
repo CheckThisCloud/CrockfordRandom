@@ -25,7 +25,7 @@ composer require checkthiscloud/crockford-random
 
 ```php
 <?php
-use App\Util\CrockfordRandom;
+use CheckThisCloud\CrockfordRandom\CrockfordRandom;
 
 // Generate a random string of specified length
 $randomString = CrockfordRandom::generate(10);
@@ -54,10 +54,12 @@ try {
 
 ## Testing
 
-Run the included tests:
+Run the tests with PHPUnit:
 
 ```bash
-php run-tests.php
+composer test
+# or
+./vendor/bin/phpunit
 ```
 
 ## Character Set
