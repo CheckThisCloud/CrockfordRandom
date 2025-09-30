@@ -4,21 +4,23 @@ declare(strict_types=1);
 
 namespace CheckThisCloud\CrockfordRandom;
 
-/**
- * Crockford Random Number Generator
- * 
- * Implementation of Douglas Crockford's random number generator algorithm.
- */
-class CrockfordRandom
+use Random\Randomizer;
+use ValueError;
+
+final class CrockfordRandom
 {
-    /**
-     * Placeholder method for the random number generator
-     * 
-     * @return float A random number between 0 and 1
-     */
-    public function random(): float
+    private const string ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+    public static function generate(int $length): string
     {
-        // TODO: Implement Crockford's random number generator algorithm
-        return 0.5;
+        if ($length < 0) {
+            throw new ValueError('Length must be non-negative');
+        }
+        if ($length === 0) {
+            return '';
+        }
+
+        $randomizer = new Randomizer();
+        return $randomizer->getBytesFromString(self::ALPHABET, $length);
     }
 }
