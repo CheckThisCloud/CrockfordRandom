@@ -9,7 +9,7 @@ use ValueError;
 
 final class CrockfordRandom
 {
-    private const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    private const string ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
     public static function generate(int $length): string
     {
