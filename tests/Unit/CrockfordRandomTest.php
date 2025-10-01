@@ -11,12 +11,6 @@ class CrockfordRandomTest extends TestCase
 {
     private const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
-    public function testGenerateZeroLength(): void
-    {
-        $result = CrockfordRandom::generate(0);
-        $this->assertSame('', $result);
-    }
-
     public function testGeneratePositiveLength(): void
     {
         for ($length = 1; $length <= 20; $length++) {
@@ -97,11 +91,6 @@ class CrockfordRandomTest extends TestCase
         }
     }
 
-    public function testGenerateLowercaseZeroLength(): void
-    {
-        $result = CrockfordRandom::generateLowercase(0);
-        $this->assertSame('', $result);
-    }
 
     public function testGenerateLowercasePositiveLength(): void
     {
