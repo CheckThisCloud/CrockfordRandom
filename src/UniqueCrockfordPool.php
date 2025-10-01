@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace CheckThisCloud\CrockfordRandom;
 
 use Brick\Math\BigInteger;
-use Brick\Math\Exception\MathException;
 use CheckThisCloud\CrockfordRandom\Exception\InvalidLength;
 use CheckThisCloud\CrockfordRandom\Exception\PoolExhausted;
 
+/**
+ * @see CrockfordRandom::generate() for the encoding details.
+ * @version Experimental: API and implementation may change without a major version bump.
+ */
 final class UniqueCrockfordPool
 {
     /** @var array<string, true> Used as a set for O(1) lookups. */
@@ -127,7 +130,7 @@ final class UniqueCrockfordPool
         if ($count <= 0) {
             throw new InvalidLength('Count must be positive.');
         }
-        $issuedPlusCount = BigInteger::of((string)$this->issuedCount())->plus(BigInteger::of((string)$count));
+        $issuedPlusCount = BigInteger::of((string) $this->issuedCount())->plus(BigInteger::of((string) $count));
         if ($issuedPlusCount->isGreaterThan($this->capacityBig())) {
             throw new PoolExhausted(
                 sprintf("Reserving %d codes would exceed pool capacity of %d.", $count, $this->capacityInt())
