@@ -13,11 +13,8 @@ final class CrockfordRandom
 
     public static function generate(int $length): string
     {
-        if ($length < 0) {
-            throw new ValueError('Length must be non-negative');
-        }
-        if ($length === 0) {
-            return '';
+        if ($length <= 0) {
+            throw new ValueError('Length must be positive');
         }
 
         $randomizer = new Randomizer();

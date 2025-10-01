@@ -11,12 +11,6 @@ class CrockfordRandomTest extends TestCase
 {
     private const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
-    public function testGenerateZeroLength(): void
-    {
-        $result = CrockfordRandom::generate(0);
-        $this->assertSame('', $result);
-    }
-
     public function testGeneratePositiveLength(): void
     {
         for ($length = 1; $length <= 20; $length++) {
@@ -28,7 +22,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateNegativeLengthThrowsException(): void
     {
         $this->expectException(ValueError::class);
-        $this->expectExceptionMessage('Length must be non-negative');
+        $this->expectExceptionMessage('Length must be positive');
         
         CrockfordRandom::generate(-1);
     }
@@ -36,7 +30,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateNegativeLengthThrowsExceptionForLargeNegative(): void
     {
         $this->expectException(ValueError::class);
-        $this->expectExceptionMessage('Length must be non-negative');
+        $this->expectExceptionMessage('Length must be positive');
         
         CrockfordRandom::generate(-100);
     }
@@ -97,11 +91,6 @@ class CrockfordRandomTest extends TestCase
         }
     }
 
-    public function testGenerateLowercaseZeroLength(): void
-    {
-        $result = CrockfordRandom::generateLowercase(0);
-        $this->assertSame('', $result);
-    }
 
     public function testGenerateLowercasePositiveLength(): void
     {
@@ -114,7 +103,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateLowercaseNegativeLengthThrowsException(): void
     {
         $this->expectException(ValueError::class);
-        $this->expectExceptionMessage('Length must be non-negative');
+        $this->expectExceptionMessage('Length must be positive');
         CrockfordRandom::generateLowercase(-1);
     }
 
