@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace CheckThisCloud\CrockfordRandom;
 
-use Brick\Math\BigInteger;
 use CheckThisCloud\CrockfordRandom\Exception\InvalidLength;
 use CheckThisCloud\CrockfordRandom\Exception\PoolExhausted;
 
@@ -116,8 +115,27 @@ final class UniqueCrockfordPool
             return (string) $this->capacityInt();
         }
 
-        $bigInt = BigInteger::of(32)->power($this->length);
-        return (string) $bigInt;
+        if (!class_exists('Brick\Math\BigInteger')) {
+            throw new InvalidLength(
+                sprintf(
+                    'Length %d requires brick/math library. Install it with: composer require brick/math. ' .
+                    'For lengths up to %d, brick/math is not required.',
+                    $this->length,
+                    self::MAX_NATIVE_LENGTH
+                )
+            );
+        }
+
+        /** @var \Brick\Math\BigInteger $of */
+        $of = \Brick\Math\BigInteger::of(32);
+
+        /** @var \Brick\Math\BigInteger $bigInt */
+        $bigInt = $of->power($this->length);
+
+        /** @var string $capacity */
+        $capacity = (string) $bigInt;
+
+        return $capacity;
     }
 
     /**
@@ -135,9 +153,31 @@ final class UniqueCrockfordPool
             return $issued >= $this->capacityInt();
         }
 
-        $issuedBig = BigInteger::of($issued);
-        $capacityBig = BigInteger::of(32)->power($this->length);
-        return $issuedBig->isGreaterThanOrEqualTo($capacityBig);
+
+        if (!class_exists('\Brick\Math\BigInteger')) {
+            throw new InvalidLength(
+                sprintf(
+                    'Length %d requires brick/math library. Install it with: composer require brick/math. ' .
+                    'For lengths up to %d, brick/math is not required.',
+                    $this->length,
+                    self::MAX_NATIVE_LENGTH
+                )
+            );
+        }
+
+        /** @var \Brick\Math\BigInteger $issuedBig */
+        $issuedBig = \Brick\Math\BigInteger::of($issued);
+
+        /** @var \Brick\Math\BigInteger $alphabetSizeBig */
+        $alphabetSizeBig = \Brick\Math\BigInteger::of(32);
+
+        /** @var \Brick\Math\BigInteger $capacityBig */
+        $capacityBig = $alphabetSizeBig->power($this->length);
+
+        /** @var bool $isExhausted */
+        $isExhausted = $issuedBig->isGreaterThanOrEqualTo($capacityBig);
+
+        return $isExhausted;
     }
 
     /**
@@ -192,8 +232,29 @@ final class UniqueCrockfordPool
                 );
             }
         } else {
-            $issuedPlusCount = BigInteger::of((string) $issued)->plus(BigInteger::of((string) $count));
-            $capacity = BigInteger::of(32)->power($this->length);
+
+            if (!class_exists('Brick\Math\BigInteger')) {
+                throw new InvalidLength(
+                    sprintf(
+                        'Length %d requires brick/math library. Install it with: composer require brick/math. ' .
+                        'For lengths up to %d, brick/math is not required.',
+                        $this->length,
+                        self::MAX_NATIVE_LENGTH
+                    )
+                );
+            }
+
+            /** @var \Brick\Math\BigInteger $of */
+            $of = \Brick\Math\BigInteger::of((string) $issued);
+
+            /** @var \Brick\Math\BigInteger $issuedPlusCount */
+            $issuedPlusCount = $of->plus(\Brick\Math\BigInteger::of((string) $count));
+
+            /** @var \Brick\Math\BigInteger $of1 */
+            $of1 = \Brick\Math\BigInteger::of(32);
+
+            /** @var \Brick\Math\BigInteger $capacity */
+            $capacity = $of1->power($this->length);
             
             if ($issuedPlusCount->isGreaterThan($capacity)) {
                 throw new PoolExhausted(
