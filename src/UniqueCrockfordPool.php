@@ -72,7 +72,7 @@ final class UniqueCrockfordPool
      * The total capacity of this pool = 32^length.
      * (Crockford alphabet size is 32.)
      *
-     * @return int<1, max> May overflow PHP int for large lengths; document limits.
+     * @return int May overflow PHP int for large lengths; document limits.
      */
     public function capacity(): int
     {
