@@ -25,7 +25,7 @@ A PHP library for generating random strings using Crockford Base32 encoding alph
 
 ### Optional Dependencies
 
-- `brick/math` (^0.11.0 || ^0.12.0) - Required only for `UniqueCrockfordPool` with lengths > 12. For most use cases (pool lengths 1-12, which support up to 1.15 quintillion unique codes), native PHP integers are sufficient.
+- `brick/math` (^0.8 || ^0.9 || ^0.10 || ^0.11 || ^0.12) - Required only for `UniqueCrockfordPool` with lengths > 12. For most use cases (pool lengths 1-12, which support up to 1.15 quintillion unique codes), native PHP integers are sufficient.
 
 ## Installation
 
