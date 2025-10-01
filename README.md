@@ -1,5 +1,11 @@
 # CrockfordRandom
 
+[![CI](https://github.com/CheckThisCloud/CrockfordRandom/actions/workflows/ci.yml/badge.svg)](https://github.com/CheckThisCloud/CrockfordRandom/actions/workflows/ci.yml)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.3-blue.svg)](https://www.php.net/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Latest Version](https://img.shields.io/packagist/v/checkthiscloud/crockford-random.svg)](https://packagist.org/packages/checkthiscloud/crockford-random)
+[![Total Downloads](https://img.shields.io/packagist/dt/checkthiscloud/crockford-random.svg)](https://packagist.org/packages/checkthiscloud/crockford-random)
+
 A PHP library for generating random strings using Crockford Base32 encoding alphabet.
 
 ## Features
