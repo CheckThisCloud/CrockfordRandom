@@ -61,7 +61,7 @@ final class UniqueCrockfordPool
     /**
      * Number of unique codes produced so far in this pool.
      *
-     * @return int<0, max>
+     * @return int
      */
     public function issuedCount(): int
     {
@@ -111,7 +111,6 @@ final class UniqueCrockfordPool
      * Reserve a batch of unique codes upfront and return them.
      * Either returns exactly $count codes or throws on exhaustion.
      *
-     * @param positive-int $count
      * @return list<string>
      * @throws PoolExhausted
      */
