@@ -9,8 +9,10 @@
     }
   ],
   "require": {
-    "php": "^8.3",
-    "brick/math": "^0.11.0"
+    "php": "^8.3"
+  },
+  "suggest": {
+    "brick/math": "^0.8 || ^0.9 || ^0.10 || ^0.11 || ^0.12 - Required for UniqueCrockfordPool with length > 12"
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",

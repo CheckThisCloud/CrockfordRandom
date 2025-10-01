@@ -15,7 +15,7 @@ class CrockfordRandomTest extends TestCase
     {
         for ($length = 1; $length <= 20; $length++) {
             $result = CrockfordRandom::generate($length);
-            $this->assertSame($length, strlen($result));
+            self::assertSame($length, strlen($result));
         }
     }
 
@@ -44,7 +44,7 @@ class CrockfordRandomTest extends TestCase
             
             for ($i = 0; $i < strlen($result); $i++) {
                 $char = $result[$i];
-                $this->assertStringContainsString(
+                self::assertStringContainsString(
                     $char,
                     self::ALPHABET,
                     "Character '{$char}' should be in alphabet"
@@ -66,7 +66,7 @@ class CrockfordRandomTest extends TestCase
         
         // Check that we have at least some different results
         $uniqueResults = array_unique($results);
-        $this->assertGreaterThan(
+        self::assertGreaterThan(
             1,
             count($uniqueResults),
             'Multiple calls should produce different results (got ' . count($uniqueResults) . ' unique out of 10)'
@@ -78,12 +78,12 @@ class CrockfordRandomTest extends TestCase
         $length = 1000;
         $result = CrockfordRandom::generate($length);
         
-        $this->assertSame($length, strlen($result));
+        self::assertSame($length, strlen($result));
         
         // Verify all characters are valid
         for ($i = 0; $i < strlen($result); $i++) {
             $char = $result[$i];
-            $this->assertStringContainsString(
+            self::assertStringContainsString(
                 $char,
                 self::ALPHABET,
                 "Character '{$char}' at position {$i} should be in alphabet"
@@ -96,7 +96,7 @@ class CrockfordRandomTest extends TestCase
     {
         for ($length = 1; $length <= 20; $length++) {
             $result = CrockfordRandom::generateLowercase($length);
-            $this->assertSame($length, strlen($result));
+            self::assertSame($length, strlen($result));
         }
     }
 
@@ -115,7 +115,7 @@ class CrockfordRandomTest extends TestCase
             $result = CrockfordRandom::generateLowercase($length);
             for ($i = 0; $i < strlen($result); $i++) {
                 $char = $result[$i];
-                $this->assertStringContainsString(
+                self::assertStringContainsString(
                     $char,
                     $alphabetLower,
                     "Character '{$char}' should be in lowercase alphabet"
@@ -133,7 +133,7 @@ class CrockfordRandomTest extends TestCase
             $results[] = $result;
         }
         $uniqueResults = array_unique($results);
-        $this->assertGreaterThan(
+        self::assertGreaterThan(
             1,
             count($uniqueResults),
             'Multiple calls should produce different results (got ' . count($uniqueResults) . ' unique out of 10)'
