@@ -97,33 +97,33 @@ class CrockfordRandomTest extends TestCase
         }
     }
 
-    public function testRandomLowercaseZeroLength(): void
+    public function testGenerateLowercaseZeroLength(): void
     {
-        $result = CrockfordRandom::randomLowercase(0);
+        $result = CrockfordRandom::generateLowercase(0);
         $this->assertSame('', $result);
     }
 
-    public function testRandomLowercasePositiveLength(): void
+    public function testGenerateLowercasePositiveLength(): void
     {
         for ($length = 1; $length <= 20; $length++) {
-            $result = CrockfordRandom::randomLowercase($length);
+            $result = CrockfordRandom::generateLowercase($length);
             $this->assertSame($length, strlen($result));
         }
     }
 
-    public function testRandomLowercaseNegativeLengthThrowsException(): void
+    public function testGenerateLowercaseNegativeLengthThrowsException(): void
     {
         $this->expectException(ValueError::class);
         $this->expectExceptionMessage('Length must be non-negative');
-        CrockfordRandom::randomLowercase(-1);
+        CrockfordRandom::generateLowercase(-1);
     }
 
-    public function testRandomLowercaseContainsOnlyValidLowercaseCharacters(): void
+    public function testGenerateLowercaseContainsOnlyValidLowercaseCharacters(): void
     {
         $alphabetLower = strtolower(self::ALPHABET);
         $lengths = [1, 5, 10, 32, 100];
         foreach ($lengths as $length) {
-            $result = CrockfordRandom::randomLowercase($length);
+            $result = CrockfordRandom::generateLowercase($length);
             for ($i = 0; $i < strlen($result); $i++) {
                 $char = $result[$i];
                 $this->assertStringContainsString(
@@ -135,12 +135,12 @@ class CrockfordRandomTest extends TestCase
         }
     }
 
-    public function testRandomLowercaseReturnsDifferentResultsOnMultipleCalls(): void
+    public function testGenerateLowercaseReturnsDifferentResultsOnMultipleCalls(): void
     {
         $length = 20;
         $results = [];
         for ($i = 0; $i < 10; $i++) {
-            $result = CrockfordRandom::randomLowercase($length);
+            $result = CrockfordRandom::generateLowercase($length);
             $results[] = $result;
         }
         $uniqueResults = array_unique($results);
