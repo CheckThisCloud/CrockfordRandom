@@ -6,4 +6,4 @@ namespace CheckThisCloud\CrockfordRandom\Exception;
 
 use ValueError;
 
-class InvalidLength extends ValueError {}
+final class InvalidLength extends ValueError {}

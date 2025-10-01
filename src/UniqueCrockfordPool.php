@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace CheckThisCloud\CrockfordRandom;
 
 use Brick\Math\BigInteger;
+use Brick\Math\Exception\MathException;
+use CheckThisCloud\CrockfordRandom\Exception\InvalidLength;
 use CheckThisCloud\CrockfordRandom\Exception\PoolExhausted;
 
 final class UniqueCrockfordPool
@@ -19,7 +21,7 @@ final class UniqueCrockfordPool
     public function __construct(private readonly int $length)
     {
         if ($length <= 0) {
-            throw new \InvalidArgumentException('Length must be positive.');
+            throw new InvalidLength('Length must be positive.');
         }
 
         $this->storage = [];
@@ -32,7 +34,7 @@ final class UniqueCrockfordPool
      */
     public function next(): string
     {
-        if ($this->issuedCount() >= $this->capacityInt()) {
+        if (BigInteger::of($this->issuedCount())->isGreaterThanOrEqualTo($this->capacityBig())) {
             throw new PoolExhausted(
                 sprintf("All unique codes of length %d have been issued.", $this->length)
             );
@@ -123,9 +125,10 @@ final class UniqueCrockfordPool
     public function reserve(int $count): array
     {
         if ($count <= 0) {
-            throw new \InvalidArgumentException('Count must be positive.');
+            throw new InvalidLength('Count must be positive.');
         }
-        if ($this->issuedCount() + $count > $this->capacityInt()) {
+        $issuedPlusCount = BigInteger::of((string)$this->issuedCount())->plus(BigInteger::of((string)$count));
+        if ($issuedPlusCount->isGreaterThan($this->capacityBig())) {
             throw new PoolExhausted(
                 sprintf("Reserving %d codes would exceed pool capacity of %d.", $count, $this->capacityInt())
             );
