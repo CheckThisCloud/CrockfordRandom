@@ -96,4 +96,58 @@ class CrockfordRandomTest extends TestCase
             );
         }
     }
+
+    public function testRandomLowercaseZeroLength(): void
+    {
+        $result = CrockfordRandom::randomLowercase(0);
+        $this->assertSame('', $result);
+    }
+
+    public function testRandomLowercasePositiveLength(): void
+    {
+        for ($length = 1; $length <= 20; $length++) {
+            $result = CrockfordRandom::randomLowercase($length);
+            $this->assertSame($length, strlen($result));
+        }
+    }
+
+    public function testRandomLowercaseNegativeLengthThrowsException(): void
+    {
+        $this->expectException(ValueError::class);
+        $this->expectExceptionMessage('Length must be non-negative');
+        CrockfordRandom::randomLowercase(-1);
+    }
+
+    public function testRandomLowercaseContainsOnlyValidLowercaseCharacters(): void
+    {
+        $alphabetLower = strtolower(self::ALPHABET);
+        $lengths = [1, 5, 10, 32, 100];
+        foreach ($lengths as $length) {
+            $result = CrockfordRandom::randomLowercase($length);
+            for ($i = 0; $i < strlen($result); $i++) {
+                $char = $result[$i];
+                $this->assertStringContainsString(
+                    $char,
+                    $alphabetLower,
+                    "Character '{$char}' should be in lowercase alphabet"
+                );
+            }
+        }
+    }
+
+    public function testRandomLowercaseReturnsDifferentResultsOnMultipleCalls(): void
+    {
+        $length = 20;
+        $results = [];
+        for ($i = 0; $i < 10; $i++) {
+            $result = CrockfordRandom::randomLowercase($length);
+            $results[] = $result;
+        }
+        $uniqueResults = array_unique($results);
+        $this->assertGreaterThan(
+            1,
+            count($uniqueResults),
+            'Multiple calls should produce different results (got ' . count($uniqueResults) . ' unique out of 10)'
+        );
+    }
 }
