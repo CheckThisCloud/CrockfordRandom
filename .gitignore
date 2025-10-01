@@ -6,6 +6,7 @@ composer.lock
 .phpunit.result.cache
 .phpunit.cache/
 coverage/
+coverage.xml
 
 # PHPStan
 .phpstan.neon

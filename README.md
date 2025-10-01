@@ -1,6 +1,7 @@
 # CrockfordRandom
 
 [![CI](https://github.com/CheckThisCloud/CrockfordRandom/actions/workflows/ci.yml/badge.svg)](https://github.com/CheckThisCloud/CrockfordRandom/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/CheckThisCloud/CrockfordRandom/branch/main/graph/badge.svg)](https://codecov.io/gh/CheckThisCloud/CrockfordRandom)
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.3-blue.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Latest Version](https://img.shields.io/packagist/v/checkthiscloud/crockford-random.svg)](https://packagist.org/packages/checkthiscloud/crockford-random)
