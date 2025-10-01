@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CheckThisCloud\CrockfordRandom;
 
+use Brick\Math\BigInteger;
 use CheckThisCloud\CrockfordRandom\Exception\InvalidLength;
 use CheckThisCloud\CrockfordRandom\Exception\PoolExhausted;
 
@@ -115,14 +116,7 @@ final class UniqueCrockfordPool
             return (string) $this->capacityInt();
         }
 
-        // For large lengths, we need brick/math
-        if (!class_exists('Brick\Math\BigInteger')) {
-            throw new \RuntimeException(
-                'brick/math is required for pool lengths > ' . self::MAX_NATIVE_LENGTH
-            );
-        }
-
-        $bigInt = \Brick\Math\BigInteger::of(32)->power($this->length);
+        $bigInt = BigInteger::of(32)->power($this->length);
         return (string) $bigInt;
     }
 
@@ -141,15 +135,8 @@ final class UniqueCrockfordPool
             return $issued >= $this->capacityInt();
         }
 
-        // For large pools, use brick/math
-        if (!class_exists('Brick\Math\BigInteger')) {
-            throw new \RuntimeException(
-                'brick/math is required for pool lengths > ' . self::MAX_NATIVE_LENGTH
-            );
-        }
-
-        $issuedBig = \Brick\Math\BigInteger::of($issued);
-        $capacityBig = \Brick\Math\BigInteger::of(32)->power($this->length);
+        $issuedBig = BigInteger::of($issued);
+        $capacityBig = BigInteger::of(32)->power($this->length);
         return $issuedBig->isGreaterThanOrEqualTo($capacityBig);
     }
 
@@ -205,15 +192,8 @@ final class UniqueCrockfordPool
                 );
             }
         } else {
-            // Use brick/math for large pools
-            if (!class_exists('Brick\Math\BigInteger')) {
-                throw new \RuntimeException(
-                    'brick/math is required for pool lengths > ' . self::MAX_NATIVE_LENGTH
-                );
-            }
-
-            $issuedPlusCount = \Brick\Math\BigInteger::of((string) $issued)->plus(\Brick\Math\BigInteger::of((string) $count));
-            $capacity = \Brick\Math\BigInteger::of(32)->power($this->length);
+            $issuedPlusCount = BigInteger::of((string) $issued)->plus(BigInteger::of((string) $count));
+            $capacity = BigInteger::of(32)->power($this->length);
             
             if ($issuedPlusCount->isGreaterThan($capacity)) {
                 throw new PoolExhausted(
