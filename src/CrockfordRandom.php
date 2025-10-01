@@ -24,7 +24,7 @@ final class CrockfordRandom
         return $randomizer->getBytesFromString(self::ALPHABET, $length);
     }
 
-    public static function randomLowercase(int $length): string
+    public static function generateLowercase(int $length): string
     {
         return strtolower(self::generate($length));
     }
