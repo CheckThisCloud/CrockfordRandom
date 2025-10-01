@@ -22,7 +22,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateNegativeLengthThrowsException(): void
     {
         $this->expectException(ValueError::class);
-        $this->expectExceptionMessage('Length must be non-negative');
+        $this->expectExceptionMessage('Length must be positive');
         
         CrockfordRandom::generate(-1);
     }
@@ -30,7 +30,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateNegativeLengthThrowsExceptionForLargeNegative(): void
     {
         $this->expectException(ValueError::class);
-        $this->expectExceptionMessage('Length must be non-negative');
+        $this->expectExceptionMessage('Length must be positive');
         
         CrockfordRandom::generate(-100);
     }
@@ -103,7 +103,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateLowercaseNegativeLengthThrowsException(): void
     {
         $this->expectException(ValueError::class);
-        $this->expectExceptionMessage('Length must be non-negative');
+        $this->expectExceptionMessage('Length must be positive');
         CrockfordRandom::generateLowercase(-1);
     }
 

@@ -110,18 +110,13 @@ $randomizer = new Randomizer();
 return $randomizer->getBytesFromString(self::ALPHABET, $length);
 ```
 
-### Input Validation
-```php
-if ($length < 0) {
-    throw new ValueError('Length must be non-negative');
-}
-```
 
 ## Dependencies
 
 ### Production
 - PHP: ^8.3
-- No external dependencies (uses built-in Random\Randomizer)
+- math/brick
+- uses built-in Random\Randomizer
 
 ### Development
 - phpunit/phpunit: ^12.3
@@ -161,14 +156,6 @@ if ($length < 0) {
 4. **Follow existing patterns**: Maintain consistency with existing code
 5. **Document changes**: Update README and code comments as needed
 
-## Common Mistakes to Avoid
-
-- ❌ Don't use non-cryptographic random number generators
-- ❌ Don't modify the Crockford Base32 alphabet
-- ❌ Don't remove strict type declarations
-- ❌ Don't skip input validation
-- ❌ Don't add unnecessary dependencies
-- ❌ Don't ignore PHPStan warnings
 
 ## Questions?
 

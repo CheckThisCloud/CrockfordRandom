@@ -55,7 +55,7 @@ The library throws `ValueError` for invalid input:
 try {
     CrockfordRandom::generate(-1);
 } catch (ValueError $e) {
-    echo $e->getMessage(); // "Length must be non-negative"
+    echo $e->getMessage(); // "Length must be positive"
 }
 ```
 
