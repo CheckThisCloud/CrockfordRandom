@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class UniqueCrockfordPoolTest extends TestCase
 {
-    private const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    private const string ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
     public function testConstructorWithPositiveLength(): void
     {
@@ -41,7 +41,7 @@ class UniqueCrockfordPoolTest extends TestCase
         $code = $pool->next();
 
         self::assertSame(5, strlen($code));
-        self::assertMatchesPattern($code);
+        $this->assertMatchesPattern($code);
         self::assertSame(1, $pool->issuedCount());
     }
 
@@ -202,7 +202,7 @@ class UniqueCrockfordPoolTest extends TestCase
 
         self::assertSame(5, strlen($code));
         self::assertSame(strtolower($code), $code, 'Code should be lowercase');
-        self::assertMatchesPattern(strtoupper($code));
+        $this->assertMatchesPattern(strtoupper($code));
     }
 
     public function testConstructorThrowsWhenBrickMathNotInstalledForLargeLength(): void
@@ -254,13 +254,95 @@ class UniqueCrockfordPoolTest extends TestCase
         $code = $pool->next();
 
         self::assertSame(13, strlen($code));
-        self::assertMatchesPattern($code);
+        $this->assertMatchesPattern($code);
+        self::assertSame(1, $pool->issuedCount());
+    }
+
+    public function testReserveForLargeLength(): void
+    {
+        // Skip test if brick/math is not installed
+        if (! class_exists('Brick\Math\BigInteger')) {
+            self::markTestSkipped('brick/math is not installed');
+        }
+
+        $pool = new UniqueCrockfordPool(13);
+        $codes = $pool->reserve(5);
+
+        self::assertCount(5, $codes);
+        self::assertSame(5, $pool->issuedCount());
+        
+        foreach ($codes as $code) {
+            self::assertSame(13, strlen($code));
+            self::assertTrue($pool->hasIssued($code));
+        }
+    }
+
+    public function testCapacityStringForVeryLargeLength(): void
+    {
+        // Skip test if brick/math is not installed
+        if (! class_exists('Brick\Math\BigInteger')) {
+            self::markTestSkipped('brick/math is not installed');
+        }
+
+        $pool = new UniqueCrockfordPool(20);
+        // 32^20 = 1267650600228229401496703205376
+        self::assertSame('1267650600228229401496703205376', $pool->capacityString());
+    }
+
+    public function testCapacityIntThrowsForLargeLength(): void
+    {
+        // Skip test if brick/math is not installed
+        if (! class_exists('Brick\Math\BigInteger')) {
+            self::markTestSkipped('brick/math is not installed');
+        }
+
+        $pool = new UniqueCrockfordPool(13);
+        
+        $this->expectException(InvalidLength::class);
+        $this->expectExceptionMessage('Capacity exceeds PHP integer limits. Use capacityString().');
+        
+        $pool->capacityInt();
+    }
+
+    public function testRemainingBigIntForLargeLength(): void
+    {
+        // Skip test if brick/math is not installed
+        if (! class_exists('Brick\Math\BigInteger')) {
+            self::markTestSkipped('brick/math is not installed');
+        }
+
+        $pool = new UniqueCrockfordPool(13);
+        
+        // remainingBigInt should return correct large number
+        // 32^13 = 36893488147419103232
+        $remaining = $pool->remainingBigInt();
+        self::assertSame('36893488147419103232', (string) $remaining);
+
+        $pool->next();
+        
+        // remaining = capacity - 1
+        $remaining = $pool->remainingBigInt();
+        self::assertSame('36893488147419103231', (string) $remaining);
+    }
+
+    public function testNextLowercaseForLargeLength(): void
+    {
+        // Skip test if brick/math is not installed
+        if (! class_exists('Brick\Math\BigInteger')) {
+            self::markTestSkipped('brick/math is not installed');
+        }
+
+        $pool = new UniqueCrockfordPool(13);
+        $code = $pool->nextLowercase();
+
+        self::assertSame(13, strlen($code));
+        self::assertSame(strtolower($code), $code);
         self::assertSame(1, $pool->issuedCount());
     }
 
     private function assertMatchesPattern(string $code): void
     {
-        for ($i = 0; $i < strlen($code); $i++) {
+        for ($i = 0, $iMax = strlen($code); $i < $iMax; $i++) {
             $char = $code[$i];
             self::assertStringContainsString(
                 $char,
