@@ -16,6 +16,9 @@ final class UniqueCrockfordPool
     /** @var array<string, true> Used as a set for O(1) lookups. */
     private array $storage;
 
+    /** @var array<string, true> Pre-excluded codes that must never be issued. */
+    private array $excluded;
+
     /**
      * Maximum length that can be handled with native PHP int (32^12 < PHP_INT_MAX).
      * For lengths > 12, brick/math is required.
@@ -24,8 +27,11 @@ final class UniqueCrockfordPool
 
     /**
      * Create a pool that yields unique Crockford Base32 codes of fixed $length.
+     *
+     * @param list<string> $exclude Codes to exclude from issuance up front (e.g. codes you already
+     *                              issued elsewhere). Normalized to uppercase. Each must match $length.
      */
-    public function __construct(private readonly int $length)
+    public function __construct(private readonly int $length, array $exclude = [])
     {
         if ($length <= 0) {
             throw new InvalidLength('Length must be positive.');
@@ -44,6 +50,30 @@ final class UniqueCrockfordPool
         }
 
         $this->storage = [];
+        $this->excluded = [];
+
+        if ($exclude !== []) {
+            $this->exclude($exclude);
+        }
+    }
+
+    /**
+     * Exclude additional codes from future issuance. Codes are normalized to uppercase.
+     * Calling this with already-excluded or already-issued codes is a no-op for those entries.
+     *
+     * @param list<string> $codes
+     * @throws InvalidLength If any code does not match the pool's length.
+     */
+    public function exclude(array $codes): void
+    {
+        foreach ($codes as $code) {
+            if (strlen($code) !== $this->length) {
+                throw new InvalidLength(
+                    sprintf('Excluded code %s does not match pool length %d.', $code, $this->length)
+                );
+            }
+            $this->excluded[strtoupper($code)] = true;
+        }
     }
 
     /**
@@ -62,7 +92,7 @@ final class UniqueCrockfordPool
 
         do {
             $code = CrockfordRandom::generate($this->length);
-        } while ($this->hasIssued($code));
+        } while (isset($this->storage[$code]) || isset($this->excluded[$code]));
 
         $this->storage[$code] = true;
         return $code;
@@ -146,10 +176,26 @@ final class UniqueCrockfordPool
             return false;
         }
 
-        $issued = $this->issuedCount();
-        
+        $taken = $this->issuedCount() + $this->excludedCount();
+
         // Use native int comparison for small pools
-        return $issued >= $this->capacityInt();
+        return $taken >= $this->capacityInt();
+    }
+
+    /**
+     * Number of pre-excluded codes (never issued by this pool).
+     */
+    public function excludedCount(): int
+    {
+        return count($this->excluded);
+    }
+
+    /**
+     * Returns true if the given code (case-insensitive) is in the excluded set.
+     */
+    public function isExcluded(string $code): bool
+    {
+        return isset($this->excluded[strtoupper($code)]);
     }
 
     /**
@@ -158,12 +204,13 @@ final class UniqueCrockfordPool
      */
     public function remaining(): int
     {
-        return $this->capacityInt() - $this->issuedCount();
+        return $this->capacityInt() - $this->issuedCount() - $this->excludedCount();
     }
 
     public function remainingBigInt(): \Brick\Math\BigInteger
     {
-        return \Brick\Math\BigInteger::of($this->capacityString())->minus(\Brick\Math\BigInteger::of($this->issuedCount()));
+        return \Brick\Math\BigInteger::of($this->capacityString())
+            ->minus(\Brick\Math\BigInteger::of($this->issuedCount() + $this->excludedCount()));
     }
 
     /**
@@ -198,12 +245,12 @@ final class UniqueCrockfordPool
             throw new InvalidLength('Count must be positive.');
         }
 
-        // Check if reservation would exceed capacity
-        $issued = $this->issuedCount();
-        
+        // Check if reservation would exceed capacity (excluded codes count against capacity too)
+        $taken = $this->issuedCount() + $this->excludedCount();
+
         if ($this->length <= self::MAX_NATIVE_LENGTH) {
             // Use native int for small pools
-            if ($issued + $count > $this->capacityInt()) {
+            if ($taken + $count > $this->capacityInt()) {
                 throw new PoolExhausted(
                     sprintf("Reserving %d codes would exceed pool capacity of %d.", $count, $this->capacityInt())
                 );
@@ -211,7 +258,7 @@ final class UniqueCrockfordPool
         } else {
 
             /** @var \Brick\Math\BigInteger $of */
-            $of = \Brick\Math\BigInteger::of((string) $issued);
+            $of = \Brick\Math\BigInteger::of((string) $taken);
 
             /** @var \Brick\Math\BigInteger $issuedPlusCount */
             $issuedPlusCount = $of->plus(\Brick\Math\BigInteger::of((string) $count));
