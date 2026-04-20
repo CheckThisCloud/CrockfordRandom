@@ -340,6 +340,100 @@ class UniqueCrockfordPoolTest extends TestCase
         self::assertSame(1, $pool->issuedCount());
     }
 
+    public function testConstructorAcceptsExcludedCodes(): void
+    {
+        $pool = new UniqueCrockfordPool(5, ['ABCDE', 'fghjk']);
+
+        self::assertSame(0, $pool->issuedCount());
+        self::assertSame(2, $pool->excludedCount());
+        self::assertTrue($pool->isExcluded('ABCDE'));
+        self::assertTrue($pool->isExcluded('abcde'), 'Should be case-insensitive');
+        self::assertTrue($pool->isExcluded('FGHJK'), 'Lowercase input should be normalized');
+        self::assertFalse($pool->hasIssued('ABCDE'), 'Excluded codes are not "issued"');
+    }
+
+    public function testConstructorThrowsOnMismatchedExcludedCodeLength(): void
+    {
+        $this->expectException(InvalidLength::class);
+        $this->expectExceptionMessage('Excluded code ABC does not match pool length 5.');
+
+        new UniqueCrockfordPool(5, ['ABC']);
+    }
+
+    public function testExcludeMethodAddsCodes(): void
+    {
+        $pool = new UniqueCrockfordPool(5);
+        $pool->exclude(['ABCDE']);
+        $pool->exclude(['fghjk', 'MNPQR']);
+
+        self::assertSame(3, $pool->excludedCount());
+        self::assertTrue($pool->isExcluded('ABCDE'));
+        self::assertTrue($pool->isExcluded('FGHJK'));
+        self::assertTrue($pool->isExcluded('MNPQR'));
+    }
+
+    public function testExcludedCodesAreNeverIssued(): void
+    {
+        // Length 1, exclude 31 of 32 possible codes — only '0' remains.
+        $allButZero = [];
+        foreach (str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ') as $char) {
+            $allButZero[] = $char;
+        }
+
+        $pool = new UniqueCrockfordPool(1, $allButZero);
+
+        self::assertSame(31, $pool->excludedCount());
+        self::assertSame(1, $pool->remaining());
+
+        $code = $pool->next();
+        self::assertSame('0', $code);
+
+        // Pool should now be exhausted.
+        $this->expectException(PoolExhausted::class);
+        $pool->next();
+    }
+
+    public function testExcludedCountReducesRemaining(): void
+    {
+        $pool = new UniqueCrockfordPool(1, ['A', 'B', 'C']);
+        self::assertSame(29, $pool->remaining()); // 32 - 3
+        $pool->next();
+        self::assertSame(28, $pool->remaining());
+    }
+
+    public function testReserveRespectsExcludedCapacity(): void
+    {
+        $pool = new UniqueCrockfordPool(1); // capacity 32
+        $pool->exclude(str_split('0123456789ABCDEFGHJKMNPQRSTVWXYZ')); // exclude all 32
+
+        $this->expectException(PoolExhausted::class);
+        $this->expectExceptionMessage('Reserving 1 codes would exceed pool capacity of 32.');
+        $pool->reserve(1);
+    }
+
+    public function testResetDoesNotForgetExcluded(): void
+    {
+        $pool = new UniqueCrockfordPool(5, ['ABCDE']);
+        $pool->next();
+
+        $pool->reset();
+
+        self::assertSame(0, $pool->issuedCount());
+        self::assertSame(1, $pool->excludedCount(), 'Excluded codes survive reset');
+        self::assertTrue($pool->isExcluded('ABCDE'));
+    }
+
+    public function testExcludeIsIdempotent(): void
+    {
+        $pool = new UniqueCrockfordPool(1);
+        $pool->exclude(str_split('0123456789ABCDEFGHJKMNPQRSTVWXYZ'));
+        self::assertSame(32, $pool->excludedCount());
+
+        // Re-excluding the same codes is a no-op.
+        $pool->exclude(['0', 'A']);
+        self::assertSame(32, $pool->excludedCount());
+    }
+
     private function assertMatchesPattern(string $code): void
     {
         for ($i = 0, $iMax = strlen($code); $i < $iMax; $i++) {
