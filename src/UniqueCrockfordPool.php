@@ -66,27 +66,14 @@ final class UniqueCrockfordPool
      */
     public function exclude(array $codes): void
     {
-        $normalized = [];
         foreach ($codes as $code) {
             if (strlen($code) !== $this->length) {
                 throw new InvalidLength(
                     sprintf('Excluded code %s does not match pool length %d.', $code, $this->length)
                 );
             }
-            $normalized[strtoupper($code)] = true;
+            $this->excluded[strtoupper($code)] = true;
         }
-
-        // Capacity sanity check (only for native-size pools; huge pools can't overflow in practice).
-        if ($this->length <= self::MAX_NATIVE_LENGTH) {
-            $taken = count($this->storage + $this->excluded + $normalized);
-            if ($taken > $this->capacityInt()) {
-                throw new PoolExhausted(
-                    sprintf('Excluding these codes would exceed pool capacity of %d.', $this->capacityInt())
-                );
-            }
-        }
-
-        $this->excluded += $normalized;
     }
 
     /**
