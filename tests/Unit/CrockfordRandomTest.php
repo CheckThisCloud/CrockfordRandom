@@ -143,17 +143,32 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateRespectsExclusions(): void
     {
         // Length 1 with 31 of 32 codes excluded forces the only remaining code.
+        // High attempt count keeps the test statistically deterministic: (31/32)^10000 ≈ 10^-138.
         $exclude = str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ');
-        $result = CrockfordRandom::generate(1, $exclude);
+        $result = CrockfordRandom::generate(1, $exclude, 10000);
         self::assertSame('0', $result);
     }
 
     public function testGenerateExclusionIsCaseInsensitive(): void
     {
-        // Exclude lowercase — generator output is uppercase — still should be honored.
         $exclude = str_split('123456789abcdefghjkmnpqrstvwxyz');
-        $result = CrockfordRandom::generate(1, $exclude);
+        $result = CrockfordRandom::generate(1, $exclude, 10000);
         self::assertSame('0', $result);
+    }
+
+    public function testGenerateDoesNotReturnExcludedCode(): void
+    {
+        // Less contrived: at length 2 (1024 codes), exclude 100 and verify output isn't among them.
+        $exclude = [];
+        for ($i = 0; $i < 100; $i++) {
+            $exclude[] = CrockfordRandom::generate(2);
+        }
+        $exclude = array_values(array_unique($exclude));
+
+        for ($i = 0; $i < 50; $i++) {
+            $result = CrockfordRandom::generate(2, $exclude);
+            self::assertNotContains($result, $exclude);
+        }
     }
 
     public function testGenerateThrowsWhenAllExcluded(): void
@@ -167,7 +182,7 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateLowercaseRespectsExclusions(): void
     {
         $exclude = str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ');
-        $result = CrockfordRandom::generateLowercase(1, $exclude);
+        $result = CrockfordRandom::generateLowercase(1, $exclude, 10000);
         self::assertSame('0', $result);
     }
 }
