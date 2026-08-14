@@ -9,7 +9,7 @@ use ValueError;
 
 final class CrockfordRandom
 {
-    private const string ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    public const string ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
     /**
      * @param list<string> $exclude Codes that must not be returned (case-insensitive).

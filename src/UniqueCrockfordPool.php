@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CheckThisCloud\CrockfordRandom;
 
+use CheckThisCloud\CrockfordRandom\Exception\InvalidCode;
 use CheckThisCloud\CrockfordRandom\Exception\InvalidLength;
 use CheckThisCloud\CrockfordRandom\Exception\PoolExhausted;
 
@@ -29,7 +30,8 @@ final class UniqueCrockfordPool
      * Create a pool that yields unique Crockford Base32 codes of fixed $length.
      *
      * @param list<string> $exclude Codes to exclude from issuance up front (e.g. codes you already
-     *                              issued elsewhere). Normalized to uppercase. Each must match $length.
+     *                              issued elsewhere). Matched case-insensitively. Each must match
+     *                              $length and contain only Crockford Base32 characters.
      */
     public function __construct(private readonly int $length, array $exclude = [])
     {
@@ -58,22 +60,48 @@ final class UniqueCrockfordPool
     }
 
     /**
-     * Exclude additional codes from future issuance. Codes are normalized to uppercase.
+     * Exclude additional codes from future issuance. Codes are matched case-insensitively.
      * Calling this with already-excluded or already-issued codes is a no-op for those entries.
+     * Nothing is applied unless every code is valid.
      *
      * @param list<string> $codes
      * @throws InvalidLength If any code does not match the pool's length.
+     * @throws InvalidCode If any code contains characters outside the Crockford Base32 alphabet.
      */
     public function exclude(array $codes): void
     {
+        $accepted = [];
+
         foreach ($codes as $code) {
             if (strlen($code) !== $this->length) {
                 throw new InvalidLength(
                     sprintf('Excluded code %s does not match pool length %d.', $code, $this->length)
                 );
             }
-            $this->excluded[strtoupper($code)] = true;
+
+            $upper = strtoupper($code);
+
+            // A code outside the alphabet can never be generated, so counting it
+            // against capacity would shrink the pool for nothing.
+            if (strspn($upper, CrockfordRandom::ALPHABET) !== strlen($upper)) {
+                throw new InvalidCode(
+                    sprintf('Excluded code %s contains characters outside the Crockford Base32 alphabet.', $code)
+                );
+            }
+
+            // Codes this pool already issued are accounted for by $storage.
+            // Recording them here too would count them against capacity twice,
+            // which reports the pool exhausted while codes remain.
+            if (isset($this->storage[$upper])) {
+                continue;
+            }
+
+            $accepted[$upper] = true;
         }
+
+        // Applied only once every code has passed validation, so a rejected
+        // call leaves the pool untouched.
+        $this->excluded += $accepted;
     }
 
     /**
@@ -199,8 +227,9 @@ final class UniqueCrockfordPool
     }
 
     /**
-     * Best-effort remaining estimate: capacity() - issuedCount().
-     * Same overflow caveat as capacity().
+     * Codes still issuable: capacityInt() - issuedCount() - excludedCount().
+     *
+     * @throws InvalidLength If length > 12, where capacity exceeds PHP integer limits.
      */
     public function remaining(): int
     {

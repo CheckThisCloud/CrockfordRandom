@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CheckThisCloud\CrockfordRandom\Tests\Unit;
 
+use CheckThisCloud\CrockfordRandom\Exception\InvalidCode;
 use CheckThisCloud\CrockfordRandom\Exception\InvalidLength;
 use CheckThisCloud\CrockfordRandom\Exception\PoolExhausted;
 use CheckThisCloud\CrockfordRandom\UniqueCrockfordPool;
@@ -432,6 +433,113 @@ class UniqueCrockfordPoolTest extends TestCase
         // Re-excluding the same codes is a no-op.
         $pool->exclude(['0', 'A']);
         self::assertSame(32, $pool->excludedCount());
+    }
+
+    public function testExcludingAnAlreadyIssuedCodeIsANoOp(): void
+    {
+        $pool = new UniqueCrockfordPool(1); // capacity 32
+        $code = $pool->next();
+
+        $pool->exclude([$code]);
+
+        self::assertSame(0, $pool->excludedCount(), 'An already-issued code must not also count as excluded');
+        self::assertSame(31, $pool->remaining());
+    }
+
+    public function testExcludingIssuedCodesDoesNotCausePrematureExhaustion(): void
+    {
+        $pool = new UniqueCrockfordPool(1); // capacity 32
+        $issued = $pool->reserve(16);
+
+        // Re-excluding codes this pool already issued (e.g. reloading known codes
+        // from storage) must not consume capacity a second time.
+        $pool->exclude($issued);
+
+        self::assertSame(16, $pool->remaining());
+
+        for ($i = 0; $i < 16; $i++) {
+            $pool->next();
+        }
+
+        self::assertSame(32, $pool->issuedCount());
+        self::assertSame(0, $pool->remaining());
+    }
+
+    public function testRemainingIsNeverNegative(): void
+    {
+        $pool = new UniqueCrockfordPool(1);
+        $issued = $pool->reserve(32); // whole pool
+
+        $pool->exclude($issued);
+
+        self::assertSame(0, $pool->remaining());
+    }
+
+    public function testExcludeRejectsCodesOutsideTheAlphabet(): void
+    {
+        $pool = new UniqueCrockfordPool(1);
+
+        $this->expectException(InvalidCode::class);
+        $this->expectExceptionMessage('Excluded code I contains characters outside the Crockford Base32 alphabet.');
+
+        $pool->exclude(['I']);
+    }
+
+    public function testConstructorRejectsExcludedCodesOutsideTheAlphabet(): void
+    {
+        $this->expectException(InvalidCode::class);
+
+        new UniqueCrockfordPool(5, ['ABCDE', 'ILOUX']);
+    }
+
+    public function testExcludingUngeneratableCodesCannotExhaustAnEmptyPool(): void
+    {
+        // I, L, O and U are exactly the characters Crockford drops, so they are the
+        // ones a caller is most likely to pass. They can never be generated, so they
+        // must not consume capacity.
+        $pool = new UniqueCrockfordPool(1);
+
+        try {
+            $pool->exclude(['I', 'L', 'O', 'U']);
+            self::fail('Expected InvalidCode');
+        } catch (InvalidCode) {
+            // expected
+        }
+
+        self::assertSame(0, $pool->excludedCount());
+        self::assertSame(32, $pool->remaining());
+    }
+
+    public function testExcludeStillAcceptsLowercaseAlphabetCodes(): void
+    {
+        $pool = new UniqueCrockfordPool(5);
+        $pool->exclude(['fghjk']);
+
+        self::assertTrue($pool->isExcluded('FGHJK'));
+    }
+
+    public function testExcludeAppliesNothingWhenAnyCodeIsInvalid(): void
+    {
+        $pool = new UniqueCrockfordPool(5);
+
+        try {
+            $pool->exclude(['ABCDE', 'ILOUX']);
+            self::fail('Expected InvalidCode');
+        } catch (InvalidCode) {
+            // expected
+        }
+
+        self::assertSame(0, $pool->excludedCount(), 'A rejected call must not half-apply');
+        self::assertFalse($pool->isExcluded('ABCDE'));
+
+        try {
+            $pool->exclude(['ABCDE', 'ABC']);
+            self::fail('Expected InvalidLength');
+        } catch (InvalidLength) {
+            // expected
+        }
+
+        self::assertSame(0, $pool->excludedCount());
     }
 
     private function assertMatchesPattern(string $code): void

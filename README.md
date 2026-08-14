@@ -86,6 +86,24 @@ $pool->reset();
 echo $pool->issuedCount();  // 0
 ```
 
+#### Excluding Codes From a Pool
+
+Codes can be excluded up front (for example, codes already issued elsewhere) or added later:
+
+```php
+$pool = new UniqueCrockfordPool(6, ['A3F2K9', 'ZZZZZZ']);
+$pool->exclude(['7Y4MXP']);
+
+$pool->isExcluded('a3f2k9');  // true — matching is case-insensitive
+$pool->excludedCount();       // 3
+$pool->remaining();           // capacity - issued - excluded
+```
+
+Excluded codes count against the pool's capacity and survive `reset()`. Every code must
+match the pool's length and contain only Crockford Base32 characters — otherwise
+`InvalidLength` or `InvalidCode` is thrown and the call applies nothing. Excluding a code
+the pool already issued is a no-op, so it is never counted against capacity twice.
+
 #### Pool Capacity Limits
 
 The pool capacity is `32^length`:
@@ -118,6 +136,14 @@ try {
     echo $e->getMessage(); // "Length must be positive"
 }
 ```
+
+| Exception | Extends | Thrown when |
+| --- | --- | --- |
+| `ValueError` | — | `generate()` is given a non-positive length |
+| `RuntimeException` | — | every code of the requested length is excluded |
+| `Exception\InvalidLength` | `ValueError` | a pool length is non-positive, an excluded code is the wrong length, or capacity exceeds PHP's integer limits |
+| `Exception\InvalidCode` | `ValueError` | an excluded code contains characters outside the alphabet |
+| `Exception\PoolExhausted` | `RuntimeException` | a pool has issued every code of its length |
 
 ## Testing
 
