@@ -305,27 +305,6 @@ class UniqueCrockfordPoolTest extends TestCase
         $pool->capacityInt();
     }
 
-    public function testRemainingBigIntForLargeLength(): void
-    {
-        // Skip test if brick/math is not installed
-        if (! class_exists('Brick\Math\BigInteger')) {
-            self::markTestSkipped('brick/math is not installed');
-        }
-
-        $pool = new UniqueCrockfordPool(13);
-        
-        // remainingBigInt should return correct large number
-        // 32^13 = 36893488147419103232
-        $remaining = $pool->remainingBigInt();
-        self::assertSame('36893488147419103232', (string) $remaining);
-
-        $pool->next();
-        
-        // remaining = capacity - 1
-        $remaining = $pool->remainingBigInt();
-        self::assertSame('36893488147419103231', (string) $remaining);
-    }
-
     public function testNextLowercaseForLargeLength(): void
     {
         // Skip test if brick/math is not installed
@@ -540,6 +519,42 @@ class UniqueCrockfordPoolTest extends TestCase
         }
 
         self::assertSame(0, $pool->excludedCount());
+    }
+
+    public function testRemainingStringForNativeLengthNeedsNoBigIntegerLibrary(): void
+    {
+        // Deliberately not skipped when brick/math is absent: length <= 12 must
+        // stay pure native arithmetic.
+        $pool = new UniqueCrockfordPool(2); // capacity 1024
+        $pool->exclude(['ZZ']);
+        $pool->reserve(10);
+
+        self::assertSame('1013', $pool->remainingString());
+    }
+
+    public function testRemainingStringMatchesRemainingForNativeLength(): void
+    {
+        $pool = new UniqueCrockfordPool(3);
+        $pool->exclude(['ABC', 'DEF']);
+        $pool->reserve(5);
+
+        self::assertSame((string) $pool->remaining(), $pool->remainingString());
+    }
+
+    public function testRemainingStringForLargeLength(): void
+    {
+        if (! class_exists('Brick\Math\BigInteger')) {
+            self::markTestSkipped('brick/math is not installed');
+        }
+
+        $pool = new UniqueCrockfordPool(13);
+
+        // 32^13 = 36893488147419103232
+        self::assertSame('36893488147419103232', $pool->remainingString());
+
+        $pool->next();
+
+        self::assertSame('36893488147419103231', $pool->remainingString());
     }
 
     private function assertMatchesPattern(string $code): void
