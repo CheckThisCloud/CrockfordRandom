@@ -104,8 +104,9 @@ $codes = $pool->reserve(100);  // Returns array of 100 unique codes
 
 // Check pool status
 echo $pool->issuedCount();  // 102 (2 + 100)
-echo $pool->capacityInt();  // 1073741824
-echo $pool->remaining();    // 1073741722
+echo $pool->capacityInt();     // 1073741824
+echo $pool->remaining();       // 1073741722
+echo $pool->remainingString(); // "1073741722" — works at any length
 
 // Check if a code was issued
 $pool->hasIssued($code1);  // true
@@ -139,6 +140,10 @@ the pool already issued is a no-op, so it is never counted against capacity twic
 The pool capacity is `32^length`:
 - Length 1-12: Supported without `brick/math` (up to 1.15 quintillion codes at length 12)
 - Length 13+: Requires `brick/math` library
+
+`capacityInt()` and `remaining()` return native integers and therefore throw above length 12.
+`capacityString()` and `remainingString()` work at every length, and reach for `brick/math`
+only above length 12 — exactly where the constructor already requires it.
 
 ```bash
 # Install brick/math for large pools (optional)

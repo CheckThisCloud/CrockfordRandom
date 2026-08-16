@@ -74,3 +74,29 @@ jobs:
           flags: php,phpunit
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  phpunit-without-brick-math:
+    name: PHPUnit (without brick/math)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Remove brick/math
+        run: composer remove --dev brick/math --no-progress --no-interaction
+
+      - name: Fail if brick/math is still installed
+        run: test ! -d vendor/brick/math
+
+      - name: Run PHPUnit
+        run: composer test

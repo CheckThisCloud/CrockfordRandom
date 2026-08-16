@@ -236,10 +236,24 @@ final class UniqueCrockfordPool
         return $this->capacityInt() - $this->issuedCount() - $this->excludedCount();
     }
 
-    public function remainingBigInt(): \Brick\Math\BigInteger
+    /**
+     * Codes still issuable, as a string so lengths above 12 stay exact.
+     *
+     * Unlike remaining(), this works at every length: brick/math is reached for
+     * only when length > 12, where the constructor already requires it.
+     */
+    public function remainingString(): string
     {
-        return \Brick\Math\BigInteger::of($this->capacityString())
-            ->minus(\Brick\Math\BigInteger::of($this->issuedCount() + $this->excludedCount()));
+        $taken = $this->issuedCount() + $this->excludedCount();
+
+        if ($this->length <= self::MAX_NATIVE_LENGTH) {
+            return (string) ($this->capacityInt() - $taken);
+        }
+
+        /** @var \Brick\Math\BigInteger $remaining */
+        $remaining = \Brick\Math\BigInteger::of($this->capacityString())->minus($taken);
+
+        return (string) $remaining;
     }
 
     /**
