@@ -143,16 +143,15 @@ class CrockfordRandomTest extends TestCase
     public function testGenerateRespectsExclusions(): void
     {
         // Length 1 with 31 of 32 codes excluded forces the only remaining code.
-        // High attempt count keeps the test statistically deterministic: (31/32)^10000 ≈ 10^-138.
         $exclude = str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ');
-        $result = CrockfordRandom::generate(1, $exclude, 10000);
+        $result = CrockfordRandom::generate(1, $exclude);
         self::assertSame('0', $result);
     }
 
     public function testGenerateExclusionIsCaseInsensitive(): void
     {
         $exclude = str_split('123456789abcdefghjkmnpqrstvwxyz');
-        $result = CrockfordRandom::generate(1, $exclude, 10000);
+        $result = CrockfordRandom::generate(1, $exclude);
         self::assertSame('0', $result);
     }
 
@@ -171,18 +170,123 @@ class CrockfordRandomTest extends TestCase
         }
     }
 
-    public function testGenerateThrowsWhenAllExcluded(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Could not generate a non-excluded code of length 1 after 50 attempts.');
-
-        CrockfordRandom::generate(1, str_split('0123456789ABCDEFGHJKMNPQRSTVWXYZ'), 50);
-    }
-
     public function testGenerateLowercaseRespectsExclusions(): void
     {
         $exclude = str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ');
-        $result = CrockfordRandom::generateLowercase(1, $exclude, 10000);
+        $result = CrockfordRandom::generateLowercase(1, $exclude);
         self::assertSame('0', $result);
+    }
+    public function testGenerateNeverFailsWhileANonExcludedCodeExists(): void
+    {
+        // 31 of 32 codes excluded: '0' is the only possible answer, so every call
+        // must return it. Rejection sampling gives up before finding it.
+        $exclude = str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ');
+
+        for ($i = 0; $i < 200; $i++) {
+            self::assertSame('0', CrockfordRandom::generate(1, $exclude));
+        }
+    }
+
+    public function testGenerateThrowsOnlyWhenEveryCodeIsExcluded(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Every code of length 1 is excluded.');
+
+        CrockfordRandom::generate(1, str_split('0123456789ABCDEFGHJKMNPQRSTVWXYZ'));
+    }
+
+    public function testGenerateSelectsAmongAllRemainingCodes(): void
+    {
+        // 30 of 32 excluded leaves exactly '0' and '1'; both must be reachable.
+        $exclude = str_split('23456789ABCDEFGHJKMNPQRSTVWXYZ');
+
+        // Collected as values, not keys: PHP would coerce '0'/'1' keys to ints.
+        $seen = [];
+        for ($i = 0; $i < 300; $i++) {
+            $seen[] = CrockfordRandom::generate(1, $exclude);
+        }
+
+        $seen = array_values(array_unique($seen));
+        sort($seen);
+        self::assertSame(['0', '1'], $seen);
+    }
+
+    public function testGenerateIgnoresExclusionsItCouldNeverProduce(): void
+    {
+        // I, L, O and U are not in the alphabet and 'AB' is the wrong length, so
+        // none of them may be counted against the keyspace.
+        $exclude = array_merge(
+            str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ'),
+            ['I', 'L', 'O', 'U', 'AB']
+        );
+
+        self::assertSame('0', CrockfordRandom::generate(1, $exclude));
+    }
+
+    public function testGenerateWithExclusionsReturnsWellFormedCodes(): void
+    {
+        // Exercises the multi-character index round-trip.
+        $exclude = [];
+        for ($i = 0; $i < 500; $i++) {
+            $exclude[] = CrockfordRandom::generate(3);
+        }
+        $exclude = array_values(array_unique($exclude));
+
+        for ($i = 0; $i < 200; $i++) {
+            $code = CrockfordRandom::generate(3, $exclude);
+
+            self::assertSame(3, strlen($code));
+            self::assertNotContains($code, $exclude);
+            $this->assertOnlyAlphabetCharacters($code);
+        }
+    }
+
+    public function testGenerateStillAcceptsTheMaxAttemptsArgument(): void
+    {
+        // Released in v1.1.0, so both call forms must keep working. maxAttempts is
+        // deliberately far too low for rejection sampling: exact selection ignores it.
+        $exclude = str_split('123456789ABCDEFGHJKMNPQRSTVWXYZ');
+
+        self::assertSame('0', CrockfordRandom::generate(1, $exclude, 5));
+        self::assertSame('0', CrockfordRandom::generate(1, $exclude, maxAttempts: 5));
+        self::assertSame('0', CrockfordRandom::generateLowercase(1, $exclude, maxAttempts: 5));
+    }
+
+    public function testGenerateAboveNativeLengthStillExcludes(): void
+    {
+        // Above length 12 the keyspace no longer fits a native int, so this takes the
+        // rejection-sampling path instead of exact selection.
+        $exclude = [];
+        for ($i = 0; $i < 50; $i++) {
+            $exclude[] = CrockfordRandom::generate(13);
+        }
+
+        for ($i = 0; $i < 50; $i++) {
+            $code = CrockfordRandom::generate(13, $exclude);
+
+            self::assertSame(13, strlen($code));
+            self::assertNotContains($code, $exclude);
+            $this->assertOnlyAlphabetCharacters($code);
+        }
+    }
+
+    public function testGenerateAboveNativeLengthHonoursMaxAttempts(): void
+    {
+        // The only deterministic way to reach the give-up branch: 32^13 is far too
+        // large to exhaust, and Randomizer is not injectable, so a collision cannot
+        // be forced. A zero budget permits no draw at all.
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Could not generate a non-excluded code of length 13 after 0 attempts.');
+
+        CrockfordRandom::generate(13, ['0000000000000'], maxAttempts: 0);
+    }
+
+    private function assertOnlyAlphabetCharacters(string $code): void
+    {
+        self::assertSame(
+            strlen($code),
+            strspn($code, CrockfordRandom::ALPHABET),
+            "Code '{$code}' contains characters outside the Crockford alphabet"
+        );
     }
 }

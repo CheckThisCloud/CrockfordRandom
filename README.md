@@ -14,6 +14,7 @@ A PHP library for generating random strings using Crockford Base32 encoding alph
 - Generates cryptographically secure random strings using PHP 8.3+'s `Random\Randomizer`
 - Uses Crockford Base32 alphabet: `0123456789ABCDEFGHJKMNPQRSTVWXYZ`
 - Excludes ambiguous characters (I, L, O, U) for better readability
+- Exclude specific codes from generation, exactly rather than by retrying
 - Type-safe with strict typing enabled
 - Comprehensive error handling
 - Optional `brick/math` dependency for large unique pools (> 1.15 quintillion codes)
@@ -45,14 +46,43 @@ use CheckThisCloud\CrockfordRandom\CrockfordRandom;
 $randomString = CrockfordRandom::generate(10);
 echo $randomString; // Example: "4G2KPQRST3"
 
-// Generate empty string
-$empty = CrockfordRandom::generate(0);
-echo $empty; // ""
+// Lowercase variant
+$lower = CrockfordRandom::generateLowercase(10);
+echo $lower; // Example: "4g2kpqrst3"
 
 // Generate longer strings
 $longString = CrockfordRandom::generate(32);
 echo $longString; // Example: "8N2KPQRST34G2KPQRST34G2KPQRST3W"
+
+// Length must be positive
+CrockfordRandom::generate(0); // throws ValueError: "Length must be positive"
 ```
+
+### Excluding Codes
+
+Pass codes that must never be returned. Matching is case-insensitive:
+
+```php
+$taken = ['4G2KPQRST3', 'ZZZZZZZZZZ'];
+
+$code = CrockfordRandom::generate(10, $taken);       // never one of $taken
+$code = CrockfordRandom::generateLowercase(10, $taken);
+```
+
+Selection is exact rather than retry-based: as long as one non-excluded code of the
+requested length exists, `generate()` returns it. It throws only when every code of
+that length is excluded:
+
+```php
+CrockfordRandom::generate(1, str_split(CrockfordRandom::ALPHABET));
+// throws RuntimeException: "Every code of length 1 is excluded."
+```
+
+Entries the generator could never produce — the wrong length, or characters outside
+the alphabet such as `I`, `L`, `O` and `U` — are ignored.
+
+The `$maxAttempts` parameter applies only above length 12, where codes are drawn by
+rejection sampling. At or below length 12 selection is exact and the parameter is ignored.
 
 ### Unique Code Pool (Experimental)
 
